@@ -1,16 +1,43 @@
 # erictokenefficiency
 
-A Claude Code skill that cuts token waste without degrading work quality.
+The complete playbook for cutting Claude Code token waste **by 85-92%** without degrading quality.
 
-Built from empirical research across the top GitHub repos on Claude token efficiency: SpharxTeam/AgentOS (memory stratification), get-zeked/token-efficient (skill format), drona23/claude-token-efficient (terse output rules), egorfedorov/claude-context-optimizer (read-cache patterns), tamzid958/claude-architect (clarify-first), seojoonkim/agentlinter (CLAUDE.md hygiene), adam-s/testing-claude-agent (the only empirical benchmark — proved long CLAUDE.md files cost more than they save).
+Built from the 6-phase token efficiency research (May 2026): empirical benchmarks, real-world cost reports ($720/mo -> $72/mo, Spotify $18K/day -> $4.5K/day), and validated against Anthropic's official docs.
 
-## What it does
+---
 
-- Strips preamble, closing fluff, narration, sycophancy, decorative unicode.
-- Blocks redundant file reads, prefers Grep + offset/limit.
-- Suggests Haiku/Sonnet/Opus by task type.
-- Has explicit safeguards so terseness never cuts: clarification, tests, root-cause analysis, security review, destructive-op confirmations.
-- Auto-disables on verbose requests ("explain", "walk me through", "huge plan", planning mode).
+## Start here
+
+| File | What it gives you |
+|---|---|
+| **[CHEATSHEET.md](CHEATSHEET.md)** | One-page reference — print and pin |
+| **[QUICKWINS.md](QUICKWINS.md)** | 7 changes to ship today (<30 min each) |
+| **[MASTER_GUIDE.md](MASTER_GUIDE.md)** | The full playbook — top 20 techniques ranked by ROI |
+| **[DECISION_MATRIX.md](DECISION_MATRIX.md)** | Task -> model + technique stack |
+| **[AVOID_LIST.md](AVOID_LIST.md)** | The 10 mistakes + exact fix for each |
+
+---
+
+## Reusable assets
+
+### Templates
+- **[templates/CLAUDE.md.template](templates/CLAUDE.md.template)** — caveman CLAUDE.md, <800 tokens
+- **[templates/agent-subagent.template.md](templates/agent-subagent.template.md)** — drop-in `.claude/agents/` definition
+- **[templates/structured-briefing.json](templates/structured-briefing.json)** — 5-field handoff schema (replaces full-context forwarding)
+
+### Patterns
+- **[patterns/cache-control-example.py](patterns/cache-control-example.py)** — Anthropic SDK `cache_control` done right (90% off)
+- **[patterns/toon-vs-json.md](patterns/toon-vs-json.md)** — when to use TOON, JSON, XML, Markdown (TOON cuts 60% on tabular)
+- **[patterns/output-suffixes.md](patterns/output-suffixes.md)** — the 5 length suffixes that cut response 50%+
+
+### Tools
+- **[tools/lint_prompt.py](tools/lint_prompt.py)** — detects bloat in prompts/CLAUDE.md (use as pre-commit hook)
+- **[tools/count_tokens.py](tools/count_tokens.py)** — token counter + cost estimator across models
+
+### Skill
+- **[SKILL.md](SKILL.md)** — the original token-efficient response-style skill (auto-loaded by Claude Code)
+
+---
 
 ## Install
 
@@ -22,7 +49,7 @@ mkdir -p ~/.claude/skills/token-efficient
 ln -sf ~/erictokenefficiency/SKILL.md ~/.claude/skills/token-efficient/SKILL.md
 ```
 
-### Windows (PowerShell, run as Admin for the symlink)
+### Windows (PowerShell as Admin)
 
 ```powershell
 git clone https://github.com/ericlu07/erictokenefficiency.git $HOME\erictokenefficiency
@@ -30,35 +57,82 @@ New-Item -ItemType Directory -Force "$HOME\.claude\skills\token-efficient" | Out
 New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\token-efficient\SKILL.md" -Target "$HOME\erictokenefficiency\SKILL.md"
 ```
 
-Or just copy `SKILL.md` into `%USERPROFILE%\.claude\skills\token-efficient\` if symlinks are blocked.
-
 ### Verify
 
 In Claude Code, run `/skills` — `token-efficient` should appear.
 
-## How to use
-
-Once installed, the skill auto-activates based on its description. No command needed.
-
-To bypass for one turn, ask for "detailed", "verbose", "explain", or "walk me through" — the override at the top of `SKILL.md` yields immediately.
-
-## Measure if it's working
-
-End every session with `/cost`. Target: output tokens <40% of total. Above 60% means the skill isn't firing or rules need tightening.
-
-## Updating across machines
-
-Pull the repo on each machine:
+### Set up the linter (optional)
 
 ```bash
-cd ~/erictokenefficiency && git pull
+pip install tiktoken
+echo "python ~/erictokenefficiency/tools/lint_prompt.py CLAUDE.md" > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
 ```
 
-The symlink picks up the new `SKILL.md` automatically.
+---
+
+## Use
+
+The skill auto-activates based on its description. To bypass for a turn, use words like "explain", "walk me through", "detailed", "verbose" — the override at the top of `SKILL.md` yields immediately.
+
+For repo-wide token efficiency:
+1. Today: read [QUICKWINS.md](QUICKWINS.md), do all 7
+2. This week: read [MASTER_GUIDE.md](MASTER_GUIDE.md), pick top 3 from "ranked by ROI"
+3. Ongoing: keep [CHEATSHEET.md](CHEATSHEET.md) on a second monitor
+
+---
+
+## Measure
+
+End every session with `/cost`.
+
+| Output % of total | Status |
+|---|---|
+| <40% | Skill working |
+| 40-60% | Could be tighter |
+| >60% | Skill not firing or rules slipping |
+
+For production agents, wire up Langfuse and track **TPQU** (Tokens Per Quality Unit) by `task_type`.
+
+---
 
 ## Benchmarking
 
-See `bench/` for the validation prompts. Methodology mirrors adam-s/testing-claude-agent: same prompt, ≥2 reps, measure tokens to first green test.
+See `bench/` for validation prompts. Methodology: same prompt, isolated worktree, ≥2 reps, measure tokens to green test.
+
+---
+
+## What's new in v2.0
+
+The original v1.0 was a single SKILL.md focused on response verbosity. v2.0 expands to the full token efficiency stack:
+- Caching (90% off cached input)
+- Subagent isolation (60-70% per call)
+- Structured briefings (replaces quadratic context forwarding)
+- Multi-model routing (97.7% accuracy at 61% cost)
+- Extended thinking gating (10x trap when misapplied)
+- TOON > JSON > XML for data
+- MCP server pruning (~25K tokens saved per disabled server)
+- The `/clear` discipline + manual `/compact` strategy
+- Linter + token counter for prompts
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
+
+---
+
+## Sources
+
+Nova's 6-phase research (2026-05-04). Validated against:
+- [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+- [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing)
+- [Claude Code costs docs](https://code.claude.com/docs/en/costs)
+- [Anthropic — effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- Wharton GAIL 2025 (CoT on reasoning models)
+- TOON benchmarks ([toon-format/toon](https://github.com/toon-format/toon))
+- LLMLingua-2 ([arXiv 2403.12968](https://arxiv.org/html/2403.12968v2))
+- Real-world reports: BuildToLaunch, MindStudio, Mehul Gupta, labeveryday, Steve Kinney
+- Empirical benchmarks: adam-s/testing-claude-agent
+
+---
 
 ## License
 

@@ -1,0 +1,37 @@
+# {ProjectName}
+
+## Stack
+- {language/framework}
+- {key dependencies, one line}
+
+## Conventions
+- Edit > Write
+- Targeted edits > rewrites
+- Match existing patterns; check before creating
+- {project-specific convention 1}
+- {project-specific convention 2}
+
+## Run
+- Dev: `{cmd}`
+- Test: `{cmd}`
+- Build: `{cmd}`
+
+## Style
+- {indent: 2 spaces / tabs}
+- {quote style}
+- ASCII only in code/comments
+- Comments for non-obvious WHY only
+
+## Don'ts
+- No `cat` whole files (use head/grep/jq)
+- No "think step by step" (raise effort instead)
+- No polite padding (please/kindly/make sure to)
+- No re-reading unchanged files
+
+## Notes
+- {one-line architecture note}
+- {one-line gotcha}
+
+---
+target: <800 tokens
+loaded every turn — every word costs forever

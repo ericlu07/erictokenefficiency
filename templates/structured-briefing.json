@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "Structured Agent Briefing",
+  "description": "5-field handoff schema. Replaces full-context forwarding (which scales quadratically). Pass POINTERS, not documents.",
+  "type": "object",
+  "required": ["objective", "constraints", "prior_decisions", "evidence_pointers", "expected_output"],
+  "properties": {
+    "objective": {
+      "type": "string",
+      "description": "Single sentence outcome the next agent must achieve"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Hard rules the next agent must respect (budgets, deadlines, no-go zones)"
+    },
+    "prior_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "decision": {"type": "string"},
+          "rationale": {"type": "string"}
+        }
+      },
+      "description": "What was already decided + why. Prevents re-litigation."
+    },
+    "evidence_pointers": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "File paths, URLs, memory:tag references. NEVER full document content."
+    },
+    "expected_output": {
+      "type": "string",
+      "description": "Schema or shape of the desired return value"
+    }
+  },
+  "examples": [
+    {
+      "objective": "Draft a LinkedIn post about Eric's Q1 traction numbers",
+      "constraints": [
+        "First person as Eric",
+        "<200 words",
+        "No mention of LUSKI by name",
+        "Punchy, no corporate tone"
+      ],
+      "prior_decisions": [
+        {"decision": "Use Q1 revenue figure not user count", "rationale": "Revenue is more verifiable + impressive given size"},
+        {"decision": "Lead with the surprise, not the number", "rationale": "Hook before flex performs better"}
+      ],
+      "evidence_pointers": [
+        "/Users/ericlu/luski_build/data/q1_metrics.csv",
+        "memory:project_eric_linkedin_brand",
+        "https://example.com/last-week-best-performer"
+      ],
+      "expected_output": "Single post body as plain text, no preamble, no hashtags"
+    }
+  ]
+}
